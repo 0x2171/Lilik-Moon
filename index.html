@@ -1,1 +1,559 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Lilik Moon</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: none;
+        }
+        
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0a0a2a, #1a0033);
+            font-family: 'Orbitron', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Preloader Styles */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a2a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease-out;
+        }
+        
+        .preloader-text {
+            color: #c792ea;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        
+        .progress-container {
+            width: 80%;
+            max-width: 400px;
+            height: 10px;
+            background: rgba(199, 146, 234, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #d400ff, #6a0dad);
+            transition: width 0.3s ease;
+        }
+        
+        /* Main Content Styles */
+        .title-container {
+            text-align: center;
+            padding: 15px 0;
+            z-index: 10;
+            position: relative;
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            color: #fff;
+            text-shadow: 
+                0 0 10px #ff00ff, 
+                0 0 20px #ff00ff, 
+                0 0 30px #ff00ff;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            position: relative;
+        }
+        
+        #scene-container {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Love Button */
+        #love-btn {
+            position: absolute;
+            bottom: 10vh;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 30px;
+            background: transparent;
+            color: #ff66ff;
+            border: 2px solid #ff66ff;
+            border-radius: 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            cursor: pointer;
+            z-index: 100;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            box-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+            animation: pulse 2s infinite;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        #love-btn:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff; }
+            50% { box-shadow: 0 0 15px #ff00ff, 0 0 30px #ff00ff, 0 0 40px #ff00ff; }
+            100% { box-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff; }
+        }
 
+        /* Модальное окно */
+        #love-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+        }
+        
+        #love-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: url("https://raw.githubusercontent.com/0x2171/Lilik-Moon/refs/heads/main/sweet.jpg ") no-repeat center center;
+            background-size: cover;
+            border: 2px solid #ff66ff;
+            border-radius: 100%;
+            top: -30px;
+            width: 100%;
+            height: 45%;
+            box-shadow: 
+            0 0 20px #ff00ff, 
+            0 0 40px #ff00ff, 
+            0 0 60px #ff00ff;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.5s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            opacity: 0.5; /* Полупрозрачность */
+        }
+    
+        #love-modal.active .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-content h2 {
+            color: #fff;
+            font-size: 2.5rem;
+            text-shadow: 
+                0 0 10px #ff00ff, 
+                0 0 20px #ff00ff;
+            letter-spacing: 3px;
+            margin: 0;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: #ff66ff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255, 102, 255, 0.2);
+            box-shadow: 0 0 10px #ff00ff;
+        }
+        
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        } 
+        
+        @keyframes fade-out {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                font-size: 1.8rem;
+            }
+            
+            #love-btn {
+                font-size: 1.2rem;
+                padding: 12px 25px;
+                bottom: 8vh;
+            }
+            
+            .modal-content {
+                padding: 40px;
+                max-width: 80%;
+            }
+            
+            .modal-content h2 {
+                font-size: 1.8rem;
+            }
+        }
+        
+        @media (min-height: 700px) and (max-height: 800px) {
+            #love-btn {
+                bottom: 15vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="preloader-text">LOADING LILIK MOON...</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="title-container">
+        <h1 class="title">Lilik Moon</h1>
+    </div>
+    
+    <div id="scene-container">
+        <!-- Love Button -->
+        <button id="love-btn">In Love</button>
+    </div>
+    
+    <!-- Love Modal -->
+    <div id="love-modal">
+        <div class="modal-content">
+            <h2>Love You</h2>
+        </div>
+    </div>
+
+    <script>
+        // Preloader logic
+        const preloader = document.getElementById('preloader');
+        const progressBar = document.getElementById('progress-bar');
+        let resourcesLoaded = 0;
+        const totalResources = 1; // Only moon texture to load
+        
+        function updateProgress() {
+            resourcesLoaded++;
+            const percent = (resourcesLoaded / totalResources) * 100;
+            progressBar.style.width = `${percent}%`;
+            
+            if (resourcesLoaded === totalResources) {
+                setTimeout(() => {
+                    preloader.style.opacity = '0';
+                    setTimeout(() => {
+                        preloader.style.display = 'none';
+                    }, 500);
+                }, 500);
+            }
+        }
+        
+        // Initialize Three.js scene after preloader
+        let scene, camera, renderer, moon;
+        let ambientLight, directionalLight1, directionalLight2;
+        
+        function initScene() {
+            // Scene setup
+            scene = new THREE.Scene();
+            const container = document.getElementById('scene-container');
+            
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(
+                75, 
+                container.clientWidth / container.clientHeight, 
+                0.1, 
+                1000
+            );
+            camera.position.z = 5;
+            
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                alpha: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+            
+            // Create stars background
+            createRealisticStars();
+            
+            // Load moon texture
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.crossOrigin = "Anonymous";
+            
+            // Используем указанную текстуру
+            const moonTextureUrl = 'https://raw.githubusercontent.com/0x2171/Lilik-Moon/refs/heads/main/2k_moon.jpg';
+            
+            textureLoader.load(
+                moonTextureUrl,
+                function(texture) {
+                    // Create moon material
+                    const moonMaterial = new THREE.MeshPhongMaterial({
+                        map: texture,
+                        bumpMap: texture,
+                        bumpScale: 0.05,
+                        shininess: 5,
+                        specular: new THREE.Color(0x333333)
+                    });
+                    
+                    // Create moon geometry
+                    const geometry = new THREE.SphereGeometry(1.8, 128, 128);
+                    moon = new THREE.Mesh(geometry, moonMaterial);
+                    
+                    // Position moon higher
+                    moon.position.y = 0.7;
+                    scene.add(moon);
+                    
+                    // Update progress
+                    updateProgress();
+                },
+                undefined,
+                function(error) {
+                    console.error('Error loading texture:', error);
+                    // Fallback to solid color if texture fails
+                    const geometry = new THREE.SphereGeometry(1.8, 64, 64);
+                    moon = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: 0xaaaaaa }));
+                    moon.position.y = 0.7;
+                    scene.add(moon);
+                    updateProgress();
+                }
+            );
+            
+            // Lighting setup
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+            
+            directionalLight1 = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight1.position.set(5, 3, 5);
+            scene.add(directionalLight1);
+            
+            directionalLight2 = new THREE.DirectionalLight(0xffeedd, 0.5);
+            directionalLight2.position.set(-5, -2, -3);
+            scene.add(directionalLight2);
+            
+            // Rotation variables
+            let isDragging = false;
+            let previousTouchPosition = { x: 0, y: 0 };
+            const rotationSpeed = 0.004;
+            let autoRotate = true;
+            let rotationSpeedY = rotationSpeed / 2;
+            
+            // TOUCH event handlers for mobile
+            container.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    autoRotate = false;
+                    previousTouchPosition = {
+                        x: e.touches[0].clientX,
+                        y: e.touches[0].clientY
+                    };
+                    e.preventDefault();
+                }
+            });
+            
+            container.addEventListener('touchmove', (e) => {
+                if (isDragging && moon && e.touches.length === 1) {
+                    const deltaX = e.touches[0].clientX - previousTouchPosition.x;
+                    const deltaY = e.touches[0].clientY - previousTouchPosition.y;
+                    
+                    moon.rotation.y += deltaX * rotationSpeed;
+                    moon.rotation.x += deltaY * rotationSpeed;
+                    
+                    previousTouchPosition = {
+                        x: e.touches[0].clientX,
+                        y: e.touches[0].clientY
+                    };
+                    e.preventDefault();
+                }
+            });
+            
+            container.addEventListener('touchend', () => {
+                isDragging = false;
+                autoRotate = true;
+            });
+            
+            // Modal functionality
+            const loveBtn = document.getElementById('love-btn');
+            const loveModal = document.getElementById('love-modal');
+            
+            // Show modal
+            loveBtn.addEventListener('click', () => {
+                loveModal.classList.add('active');
+            });
+            
+            loveBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                loveModal.classList.add('active');
+            });
+            
+            // Close modal when clicking outside
+            loveModal.addEventListener('click', (e) => {
+                if (e.target === loveModal) {
+                    loveModal.classList.remove('active');
+                }
+            });
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                if (autoRotate && moon) {
+                    moon.rotation.y += rotationSpeedY;
+                }
+                
+                if (renderer) renderer.render(scene, camera);
+            }
+            animate();
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+        
+        // Create realistic stars with priority on bright stars
+        function createRealisticStars() {
+            const starGroups = [
+                { count: 500, size: 2.2, brightness: 1.0 },   // Very bright stars (priority)
+                { count: 800, size: 1.8, brightness: 0.9 },   // Bright stars (priority)
+                { count: 1200, size: 1.2, brightness: 0.7 },  // Medium stars
+                { count: 2000, size: 0.6, brightness: 0.4 }   // Dim stars
+            ];
+            
+            starGroups.forEach(group => {
+                const starGeometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(group.count * 3);
+                const colors = new Float32Array(group.count * 3);
+                const sizes = new Float32Array(group.count);
+                
+                for (let i = 0; i < group.count; i++) {
+                    // Position
+                    const i3 = i * 3;
+                    positions[i3] = (Math.random() - 0.5) * 2000;
+                    positions[i3 + 1] = (Math.random() - 0.5) * 2000;
+                    positions[i3 + 2] = (Math.random() - 0.5) * 2000;
+                    
+                    // Color variations with more blues
+                    const colorVariation = Math.random() * 0.4;
+                    const r = group.brightness - colorVariation * 0.6;
+                    const g = group.brightness - colorVariation * 0.4;
+                    const b = group.brightness + colorVariation * 0.8;
+                    
+                    colors[i3] = r;
+                    colors[i3 + 1] = g;
+                    colors[i3 + 2] = b;
+                    
+                    // Size variations
+                    sizes[i] = group.size * (0.8 + Math.random() * 0.4);
+                }
+                
+                starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                starGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                starGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+                
+                const starMaterial = new THREE.PointsMaterial({
+                    size: group.size,
+                    sizeAttenuation: true,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: group.brightness,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                
+                const stars = new THREE.Points(starGeometry, starMaterial);
+                scene.add(stars);
+            });
+            
+            // Add special bright stars (red giants, blue supergiants)
+            const specialStars = [
+                { color: new THREE.Color(1, 0.6, 0.6), size: 3.0, brightness: 1.2, count: 20 },
+                { color: new THREE.Color(0.6, 0.8, 1.0), size: 2.8, brightness: 1.1, count: 15 },
+                { color: new THREE.Color(1.0, 1.0, 0.8), size: 2.5, brightness: 1.0, count: 30 }
+            ];
+            
+            specialStars.forEach(star => {
+                const starGeometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(star.count * 3);
+                
+                for (let i = 0; i < star.count; i++) {
+                    const i3 = i * 3;
+                    positions[i3] = (Math.random() - 0.5) * 2000;
+                    positions[i3 + 1] = (Math.random() - 0.5) * 2000;
+                    positions[i3 + 2] = (Math.random() - 0.5) * 2000;
+                }
+                
+                starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                
+                const starMaterial = new THREE.PointsMaterial({
+                    color: star.color,
+                    size: star.size * (0.9 + Math.random() * 0.2),
+                    sizeAttenuation: true,
+                    transparent: true,
+                    opacity: star.brightness,
+                    blending: THREE.AdditiveBlending
+                });
+                
+                const stars = new THREE.Points(starGeometry, starMaterial);
+                scene.add(stars);
+            });
+        }
+        
+        // Initialize the scene after page load
+        window.addEventListener('load', initScene);
+    </script>
+</body>
+</html>
